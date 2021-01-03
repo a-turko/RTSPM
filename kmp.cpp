@@ -17,10 +17,6 @@ vector <int> occurrences (string pattern, int n)
 		pi.push_back( pattern[i] == pattern[nxt] ? nxt+1 : nxt);
 	}
 
-	debug ("Got pi: ");
-	for (int p: pi) debug ("%d ", p);
-	debug ("\n");
-
 	int nxt = 0;
 	for (int i = 0; i < n; i++) {
 		char c;
@@ -37,6 +33,10 @@ vector <int> occurrences (string pattern, int n)
 	return ans;
 }
 
+#ifdef MEMREPORT
+extern void memreport();
+#endif
+
 int main ()
 {
 	int n, m;
@@ -46,4 +46,8 @@ int main ()
 	vector <int> ans = occurrences(pattern, n);
 
 	for (int x: ans) cout<<x <<"\n";
+
+	#ifdef MEMREPORT
+	memreport();
+	#endif
 }

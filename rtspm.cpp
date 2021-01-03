@@ -2,6 +2,7 @@
 #include <vector>
 #include <cassert>
 #include <cstdio>
+#include <unistd.h>
 using namespace std;
 #define debug(...) //fprintf(stderr, __VA_ARGS__)
 
@@ -200,7 +201,9 @@ private:
 
 };
 
-
+#ifdef MEMREPORT
+extern void memreport();
+#endif
 
 int main ()
 {
@@ -226,4 +229,8 @@ int main ()
 
 		fflush(stdout);
 	}
+
+	#ifdef MEMREPORT
+	memreport();
+	#endif
 }
