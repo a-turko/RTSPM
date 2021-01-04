@@ -16,8 +16,6 @@ void memreport()
 
 	FILE *fp = freopen(pathname, "r", stdin);
 	assert(fp);
-	fp = freopen("memory.data", "w", stderr);
-	assert(fp);
 
 	string line;
 
