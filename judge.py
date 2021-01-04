@@ -67,8 +67,8 @@ def checkTime(textLen, step):
 def checkErrors(modulo):
 
 	errcnt = 0
+	kmp = runAns('kmp', 'test.in')
 	for base in range(1, modulo):
-		kmp = runAns('kmp', 'test.in')
 		hash = runAns('rtspm', 'test.in', [str(modulo), str(base)])
 
 		status = errors(kmp, hash)

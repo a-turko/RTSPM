@@ -21,7 +21,7 @@ kmp: kmp.cpp
 	g++ $(CXXFLAGS) $< -o $@
 
 rtspm: rtspm.cpp
-	g++ $(CXXFLAGS) $(lasan) $< -o $@
+	g++ $(CXXFLAGS) $< -o $@
 
 clean:
 	rm $(objects) $(executables)
