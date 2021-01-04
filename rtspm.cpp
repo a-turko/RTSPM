@@ -11,7 +11,7 @@ long long fexp(long long base, int exponent, long long mod)
 {
 	long long res = 1;
 	
-	for (int a = 1; a < exponent; a *= 2, base = base * base % mod)
+	for (int a = 1; a <= exponent; a *= 2, base = base * base % mod)
 		if (exponent & a) res = res * base % mod;
 	
 	return res;
