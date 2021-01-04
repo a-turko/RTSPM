@@ -2,7 +2,6 @@
 #include <vector>
 #include <cassert>
 #include <cstdio>
-#include <unistd.h>
 using namespace std;
 #define debug(...) //fprintf(stderr, __VA_ARGS__)
 
@@ -39,8 +38,8 @@ hashtype concatFingerprint(hashtype pref, hashtype suf, long long mod)
 	auto [sufFP, sufExp, sufInw] = suf;
 
 	fingerprint = (prefFP * sufExp + sufFP) % mod;
-	baseExp = prefExp * sufExp;
-	baseExpInw = prefInw * sufInw;
+	baseExp = prefExp * sufExp % mod;
+	baseExpInw = prefInw * sufInw % mod;
 
 	return {fingerprint, baseExp, baseExpInw};
 }
@@ -79,6 +78,7 @@ public:
 			if (pos != firstPos * (n+1) or
 				periodFP == suffixFingerprint(lastFP, hash, mod)) {
 				
+				debug ("Found a collitsion");
 				return false;
 			}
 
@@ -150,7 +150,7 @@ public:
 		if (collision) return true;
 
 		
-		bool report = (a == get<0>(Fingerprints[0]));
+		bool report = (a % mod == get<0>(Fingerprints[0]));
 		hashtype reportFP = currFP;
 
 		appendLetter(currFP, a, base, baseInw, mod);
@@ -176,7 +176,10 @@ public:
 
 			if (report) {
 				debug ("Save level %d at %d -- %lld\n", i, n - Lengths[i], get<1>(reportFP));
-				Containers[i].insert(n - Lengths[i], reportFP);
+				
+				if (not Containers[i].insert(n - Lengths[i], reportFP)) {
+					collision = true;
+				}
 			}
 
 			report = occurrence;
@@ -205,12 +208,17 @@ private:
 extern void memreport();
 #endif
 
-int main ()
+int main (int argc, char *argv[])
 {
+	int mod, base;
+
+	mod = (argc == 1 ? 1e9+7 : atoi(argv[1]));
+	base = (argc == 1 ? 31 : atoi(argv[2]));
+	
 	int n, m;
 	scanf ("%d %d", &n, &m);
 
-	RTSPM Solver(1e9+7, 31);
+	RTSPM Solver(mod, base);
 
 	for (int i = 1; i <= m; i++)
 	{
