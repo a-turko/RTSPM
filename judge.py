@@ -85,6 +85,7 @@ def checkMem(textLen, step):
 		K.append(kmp)
 		R.append(rtspm)
 		M.append(m)
+		print(m, kmp, rtspm, file=sys.stderr)
 		m += (m+1)//2
 
 	#print(K)
@@ -122,6 +123,7 @@ def checkTime(textLen, step):
 		K.append(kmp)
 		R.append(rtspm)
 		M.append(m)
+		print(m, kmp, rtspm, file=sys.stderr)
 		m += (m+1)//2
 
 	#print(K)

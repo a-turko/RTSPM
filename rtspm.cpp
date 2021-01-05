@@ -3,7 +3,6 @@
 #include <cassert>
 #include <cstdio>
 using namespace std;
-#define debug(...) //fprintf(stderr, __VA_ARGS__)
 
 /**
  * hashtype -- the signature of the fingerprint
@@ -28,9 +27,9 @@ long long fexp(long long base, int exponent, long long mod)
 
 /**
  * suffixFingerprint -- returns the fingerprint of the suffix.
- * Let word and pref be fingerprints modulo mod
+ * Let word and pref be fingerprints
  * of words a and ab respectively, then
- * suffixFingerprint returns the fingerprint of word b.
+ * suffixFingerprint returns the fingerprint of the word b.
  */
 hashtype suffixFingerprint(hashtype pref, hashtype word, long long mod)
 {
@@ -64,7 +63,7 @@ hashtype concatFingerprint(hashtype pref, hashtype suf, long long mod)
 }
 
 /** appendLetter -- updates the fingerprint to contain
- * the letter appended to the word.
+ * the letter appended to the word this fingerprint represents.
  */
 void appendLetter(hashtype &FP, int letter, long long base, long long baseInw, long long mod)
 {
@@ -97,7 +96,7 @@ public:
 	 * insert -- insert an occurrence:
 	 * pos -- start of the occurrence
 	 * hash -- fingerprint of the text's prefix (T[0...(pos-1)])
-	 * returns true if the insertion succedded
+	 * returns true if the insertion succeeded
 	 * if a hash collision was detected,
 	 * the insertion fails and false is returned
 	 */
@@ -119,14 +118,12 @@ public:
 			/* Check if distances between occurrences are
 			 * indeed equal. */
 			if (pos != firstPos + period * n) {
-				debug ("Collision, period rule broken!");
 				return false;
 			}
 
 			/* Check if fingerprints of supposed period
 			 * occurrences match. */
 			if (periodFP != suffixFingerprint(lastFP, hash, mod)) {
-				debug ("Collision, fingerprints do not match!");
 				return false;
 			}
 
@@ -138,7 +135,7 @@ public:
 	}
 
 	/**
-	 * query -- check whether a occurrence starting at
+	 * query -- check whether an occurrence starting at
 	 * pos has been recorded.
 	 * If it was, remove it from the structure,
 	 * populate hash with fingerprint of its prefix
@@ -163,7 +160,7 @@ private:
 	/* number of stored occurrences */
 	int n = 0;
 
-	/* beginning of the earlies occurrence */
+	/* beginning of the earliest occurrence */
 	int firstPos;
 	
 	/* (supposed) length of the smallest period of the pattern's prefix */
@@ -181,15 +178,15 @@ private:
  * 
  * A class implementing the algorithm processing
  * letters of the patterns and text one by one.
- * All letters of the pattern must have been processed
- * before the processing of the text begins.
+ * All letters of the pattern must have been already 
+ * processed before the processing of the text begins.
  * 
  * False positives may occur
  * with probability at most 3*n*m/mod
  * (assuming that the base is chosen uniformly at
  * random from [0, mod-1] and mod is a prime).
  * 
- * If the bases have been chosen idependently,
+ * If the bases have been chosen independently,
  * then the probabilities of failure of the
  * corresponding algorithms are also independent.
  * Hence, the desired probability of failure can
@@ -269,6 +266,8 @@ public:
 			if (report) {
 
 				if (not Containers[i].insert(n - Lengths[i], reportFP)) {
+					/* A collision has been detected, from now on always
+					 * report an occurrence of the pattern. */
 					collision = true;
 				}
 			}
