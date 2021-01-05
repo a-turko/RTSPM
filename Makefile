@@ -4,6 +4,8 @@ lasan = -fsanitize=address -fsanitize=address -fsanitize=undefined -static-libas
 objects=memreport.o rtspm.o kmp.o
 executables=kmp-mem rtspm-mem kmp rtspm gen
 
+default: all
+
 all: $(executables)
 
 %.o: %.cpp

@@ -31,8 +31,12 @@ int main(int argc, char *argv[])
 	int type = atoi(argv[1]);
 	int n = atoi(argv[2]);
 	int m = atoi(argv[3]);
-
-	if (type == 0) {
+	
+	if (type == -1) {
+		string text = fib(n), pattern = fib(m);
+		cout<<text.size() <<" " <<pattern.size() <<"\n" <<pattern <<"\n" <<text <<"\n";
+	}
+	else if (type == 0) {
 		cout<<n <<" " <<m <<"\n" <<fibWord(m) <<"\n" <<fibWord(n) <<"\n";
 	} else {
 		cout<<n <<" " <<m <<"\n" <<word(m, type) <<"\n" <<word(n, type) <<"\n";
