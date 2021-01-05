@@ -5,18 +5,33 @@
 using namespace std;
 #define debug(...) //fprintf(stderr, __VA_ARGS__)
 
+/**
+ * hashtype -- the signature of the fingerprint
+ * Let h be the finger print of a word of length n, then:
+ * h[0] is the actual fingerprint 
+ * h[1] = base^n % mod
+ * h[2] = base^(-n) % mod
+ */
 typedef tuple <long long, long long, long long> hashtype;
 
+/**
+ * fexp: fast exponentiation -- returns base^exponent % mod
+ */
 long long fexp(long long base, int exponent, long long mod)
 {
 	long long res = 1;
-	
 	for (int a = 1; a <= exponent; a *= 2, base = base * base % mod)
 		if (exponent & a) res = res * base % mod;
 	
 	return res;
 }
 
+/**
+ * suffixFingerprint -- returns the fingerprint of the suffix.
+ * Let word and pref be fingerprints modulo mod
+ * of words a and ab respectively, then
+ * suffixFingerprint returns the fingerprint of word b.
+ */
 hashtype suffixFingerprint(hashtype pref, hashtype word, long long mod)
 {
 	long long fingerprint, baseExp, baseExpInw;
@@ -31,6 +46,10 @@ hashtype suffixFingerprint(hashtype pref, hashtype word, long long mod)
 	return {fingerprint, baseExp, baseExpInw};
 }
 
+/** concatFingerprint -- returns the fingerprint of concatenation.
+ * Let pref and suf be fingerprints of x and y respectively, then
+ * the fingerprint of xy is returned.
+ */
 hashtype concatFingerprint(hashtype pref, hashtype suf, long long mod)
 {
 	long long fingerprint, baseExp, baseExpInw;
@@ -44,6 +63,9 @@ hashtype concatFingerprint(hashtype pref, hashtype suf, long long mod)
 	return {fingerprint, baseExp, baseExpInw};
 }
 
+/** appendLetter -- updates the fingerprint to contain
+ * the letter appended to the word.
+ */
 void appendLetter(hashtype &FP, int letter, long long base, long long baseInw, long long mod)
 {
 	auto [fingerprint, baseExp, baseExpInw] = FP;
@@ -53,6 +75,16 @@ void appendLetter(hashtype &FP, int letter, long long base, long long baseInw, l
 	FP = {fingerprint, baseExp, baseExpInw};
 }
 
+
+/** Container -- a class for storing occurrences
+ * of pattern's prefixes of the same length.
+ * Assumptions:
+ * 
+ * All positions in the text are queried
+ * from left to right.
+ * 
+ * All occurrences in the structure must intersect. 
+ */
 class Container {
 public:
 
@@ -61,9 +93,17 @@ public:
 		mod = _mod;
 	}
 
+	/**
+	 * insert -- insert an occurrence:
+	 * pos -- start of the occurrence
+	 * hash -- fingerprint of the text's prefix (T[0...(pos-1)])
+	 * returns true if the insertion succedded
+	 * if a hash collision was detected,
+	 * the insertion fails and false is returned
+	 */
 	bool insert(int pos, hashtype hash)
 	{
-		assert(pos > firstPos * n or n == 0);
+		assert(pos > firstPos + period * (n-1) or n == 0);
 
 		if (n == 0) {
 			firstPos = pos;
@@ -75,10 +115,18 @@ public:
 			lastFP = hash;
 
 		} else {
-			if (pos != firstPos * (n+1) or
-				periodFP == suffixFingerprint(lastFP, hash, mod)) {
-				
-				debug ("Found a collitsion");
+
+			/* Check if distances between occurrences are
+			 * indeed equal. */
+			if (pos != firstPos + period * n) {
+				debug ("Collision, period rule broken!");
+				return false;
+			}
+
+			/* Check if fingerprints of supposed period
+			 * occurrences match. */
+			if (periodFP != suffixFingerprint(lastFP, hash, mod)) {
+				debug ("Collision, fingerprints do not match!");
 				return false;
 			}
 
@@ -89,8 +137,16 @@ public:
 		return true;
 	}
 
-	bool query(int pos, hashtype &hash) {
-		
+	/**
+	 * query -- check whether a occurrence starting at
+	 * pos has been recorded.
+	 * If it was, remove it from the structure,
+	 * populate hash with fingerprint of its prefix
+	 * and return true.
+	 * Otherwise, return false.
+	 */
+	bool query(int pos, hashtype &hash)
+	{
 		if (n == 0) return false;
 		assert(pos <= firstPos);
 		if (pos < firstPos) return false;
@@ -104,13 +160,45 @@ public:
 	}
 
 private:
+	/* number of stored occurrences */
 	int n = 0;
 
-	int firstPos, period;
-	hashtype firstFP, periodFP, lastFP;
+	/* beginning of the earlies occurrence */
+	int firstPos;
+	
+	/* (supposed) length of the smallest period of the pattern's prefix */
+	int period;
+
+	/* fingerprints of the (supposed) smallest period, prefixes ending
+	 * before the first and last occurrence */  
+	hashtype periodFP, firstFP, lastFP;
+
 	long long mod;
 };
 
+/**
+ * RTSPM -- real time streaming pattern matching
+ * 
+ * A class implementing the algorithm processing
+ * letters of the patterns and text one by one.
+ * All letters of the pattern must have been processed
+ * before the processing of the text begins.
+ * 
+ * False positives may occur
+ * with probability at most 3*n*m/mod
+ * (assuming that the base is chosen uniformly at
+ * random from [0, mod-1] and mod is a prime).
+ * 
+ * If the bases have been chosen idependently,
+ * then the probabilities of failure of the
+ * corresponding algorithms are also independent.
+ * Hence, the desired probability of failure can
+ * be achieved by running many instances of the 
+ * algorithm in parallel.
+ * 
+ * Memory complexity: O(log m)
+ * 
+ */
 class RTSPM {
 public:
 	RTSPM(long long _mod = 1e9+7, long long _base = 29)
@@ -121,6 +209,11 @@ public:
 		currFP = {0, 1, 1};
 	}
 
+	/**
+	 * processPattern
+	 * process the next letter of the pattern.
+	 * Complexity: O(1) (amortized, because of vector usage)
+	 */
 	void processPattern(int a)
 	{
 		assert(n == 0);
@@ -135,21 +228,27 @@ public:
 		appendLetter(currFP, a, base, baseInw, mod);
 	}
 
+	/**
+	 * processText
+	 * process the next letter of the text.
+	 * returns false if no occurrence of the pattern
+	 * ends at the processed symbol and true otherwise.
+	 * 
+	 * Note that false positives are possible.
+	 * 
+	 * Complexity: O(log m)
+	 */
 	bool processText(int a)
 	{
 		if ((n++) == 0) {
 			Lengths.push_back(m);
 			Fingerprints.push_back(currFP);
 
-			debug ("we have %d levels\n", levels);
 			currFP = {0, 1, 1};
 		}
 
-		debug ("\n\nProcess a letter %d\n", a);
-
 		if (collision) return true;
 
-		
 		bool report = (a % mod == get<0>(Fingerprints[0]));
 		hashtype reportFP = currFP;
 
@@ -157,26 +256,18 @@ public:
 
 		for (int i = 0; i<levels; i++)
 		{
-			if (report) {
-				debug ("New occ at level %d\n", i);
-			}
-
 			bool occurrence;
 			hashtype hash, levelFP;
 
 			occurrence = Containers[i].query(n - Lengths[i+1], hash);
+
 			if (occurrence) {
 				levelFP =  suffixFingerprint(hash, currFP, mod);
-
-				assert (get<1>(levelFP) == get<1>(Fingerprints[i+1]));
-				debug ("Poromote occurance of level %d ? : %lld %lld\n", i, get<0>(levelFP), get<0>(Fingerprints[i+1]));
-
 				occurrence = (levelFP == Fingerprints[i+1]);
 			}
 
 			if (report) {
-				debug ("Save level %d at %d -- %lld\n", i, n - Lengths[i], get<1>(reportFP));
-				
+
 				if (not Containers[i].insert(n - Lengths[i], reportFP)) {
 					collision = true;
 				}
@@ -192,7 +283,13 @@ public:
 private:
 	long long mod, base, baseInw;
 
+	/* Information about the pattern */
 	int m = 0, levels = 0;
+	
+	/* For log (m) pattern's prefixes, their
+	 * lengths (powers of 2) and fingerprints are stored.
+	 * There is a container for occurrences
+	 * of each one of them. */ 
 	vector <hashtype> Fingerprints;
 	vector <int> Lengths;
 	vector <Container> Containers;
@@ -234,8 +331,6 @@ int main (int argc, char *argv[])
 		bool occurrence = Solver.processText(c - 'a');
 
 		if (occurrence) printf ("%d\n", i - m);
-
-		fflush(stdout);
 	}
 
 	#ifdef MEMREPORT
