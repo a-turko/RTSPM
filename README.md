@@ -11,23 +11,27 @@ $ python3 judge.py correctness
 
 There exists a probability of false positives. It can be demonstrated the following way:
 ```bash
-$ ./gen 0 4000 100
+$ ./gen 0 4000 100 > test.in
 $ python3 judge.py probability 13 
 ```
 This will create a test in the file test.in and run the algorithm with modulo 13.
-The algorithm is be executed for each base from 0 to modulo-1 ([0, 12]).
+The algorithm is executed for each base from 0 to modulo-1 ([0, 12]).
 
-The algorithm works in the streaming model, so letters are given one by one and there is no random access to either the pattern or the text. The algorithm needs O(1) operations to process a letter of the pattern and O(log m) to process the next letter of the text and report whether an occurrence of the pattern ends on that symbol.
-The space complexity is O(log m) (mesured in words).
-
-
-The following charts show time and memory consumption of the algorithm in comparison to a solution with random access to the pattern using KMP (hence O(m) memory consumption and O(n+m) running time):
+Let n and m be lengths of the text and pattern correspondingly.
+The algorithm works in the streaming model, so letters are given one by one and there is no random access to either the pattern or the text. The algorithm needs O(1) operations to process a letter of the pattern and O(log m) to process a letter of the text and report whether an occurrence of the pattern ends on that symbol.
+The space complexity is O(log m) (measured in words).
 
 
+The following charts show time and memory consumption of the algorithm in comparison to a solution with random access to the pattern using the KMP algorithm (hence O(m) memory consumption and O(n+m) running time):
+
+
+![](./time_plot.png)
+
+![](./memory_plot.png)
 
 Such charts can be created by running:
 ```bash
 $ python3 judge.py memory <n> <smallest m> <name>
-# python3 judge.py time <n> <smallest m> <name>
+$ python3 judge.py time <n> <smallest m> <name>
 ```
 The resulting charts will be saved as name.png.
